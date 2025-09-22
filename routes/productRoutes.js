@@ -24,4 +24,9 @@ router.delete("/:id", async(req, res)=>{
     res.send('Product Deleted Successfully!')
 })
 
+router.put("/:id", async(req, res)=>{
+     await Product.findByIdAndUpdate(req.params.id, req.body)
+    res.send('Product Updated Successfully!')
+})
+
 module.exports = router;
