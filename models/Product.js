@@ -50,6 +50,12 @@ const productSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    status: {
+      type: String,
+      enum: ["in-stock", "low-stock", "critical"],
+      default: "in-stock",
+    },
+
   },
   { timestamps: true }
 );
