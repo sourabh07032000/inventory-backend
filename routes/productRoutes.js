@@ -12,8 +12,10 @@ router.post("/create-product", async(req, res)=>{
 
 
 
-router.get("/:id", async(req, res)=>{
-    const product = await Product.findById(req.params.id)
+router.get("/all-products/:id", async(req, res)=>{
+    const product = await Product.find({
+        wholesaler : req.params.id
+    })
     res.send(product)
 })
 
