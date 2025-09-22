@@ -11,7 +11,7 @@ router.post("/create-wholesaler", async(req, res)=>{
 });
 
 router.post("/login-verify", async(req, res)=>{
-    const user = await User.findOne(req.body.email)
+    const user = await User.findOne({email : req.body.email})
     res.send(user._id)
 })
 
