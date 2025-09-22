@@ -19,4 +19,9 @@ router.get("/all-products/:id", async(req, res)=>{
     res.send(product)
 })
 
+router.delete("/:id", async(req, res)=>{
+     await Product.findByIdAndDelete(req.params.id)
+    res.send('Product Deleted Successfully!')
+})
+
 module.exports = router;
