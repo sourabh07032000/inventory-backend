@@ -1,5 +1,5 @@
-import express from "express";
-import User from "../models/User";
+const express = require("express");
+const User = require("../models/User");
 
 const router = express.Router();
 
@@ -10,4 +10,4 @@ router.post("/create-wholesaler", async(req, res)=>{
     res.send('User created successfully')
 });
 
-export default router;
+module.exports = router;
