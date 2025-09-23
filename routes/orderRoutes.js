@@ -77,6 +77,8 @@ router.post("/create-order", async (req, res) => {
 
     // 🔹 Update customer's balance & totalPurchases
     customer.totalPurchases += total;
+    customer.lastPurchase = new Date(date); // or new Date() if you want current timestamp
+
 
     if (paymentType === "credit") {
       customer.balance += total; // increase outstanding balance

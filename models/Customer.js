@@ -20,7 +20,7 @@ const CustomerSchema = new Schema(
 
     // For loyalty programs or frequent buyers
     totalPurchases: { type: Number, default: 0 },
-
+    lastPurchase: { type: Date },
     // If linked to wholesaler
     wholesaler: { type: Schema.Types.ObjectId, ref: "Wholesaler" },
   },
