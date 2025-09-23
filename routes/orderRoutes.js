@@ -103,8 +103,10 @@ router.post("/create-order", async (req, res) => {
 
 
 
-router.get("/all-orders", async (req, res) => {
-  const order = await Order.find()
+router.get("/all-orders/:id", async (req, res) => {
+  const order = await Order.find({
+    wholesaler : req.params.id
+  })
   res.send(order)
 })
 
