@@ -4,19 +4,11 @@ const Customer = require('../models/Customer')
 const router = express.Router();
 
 // Only superadmin/admin can create wholesaler
-router.post("/create-order", async(req, res)=>{
-    
-    try {
-      console.log(req.body)
-    const oldCustomer = await Customer.findOne({phone : req.body.customerPhone})
-    if(!oldCustomer){
-        const newCustomer = new Customer({
-            name : req.body.customerName,
-            phone : req.body.customerPhone,
-            wholesaler: req.body.wholesaler
-        })
-        await newCustomer.save()
-    }
+router.post("/create-order", async (req, res) => {
+
+  try {
+    console.log(req.body)
+   
     const {
       billNumber,
       date,
@@ -50,7 +42,7 @@ router.post("/create-order", async(req, res)=>{
       quantity: item.quantity,
       unitPrice: item.price,
       totalPrice: item.price * item.quantity,
-      unit : item.unit
+      unit: item.unit
     }));
 
     // Save into DB
@@ -72,6 +64,29 @@ router.post("/create-order", async(req, res)=>{
 
     const savedOrder = await newOrder.save();
 
+    // 🔹 Find or create customer
+    let customer = await Customer.findOne({ phone: customerPhone });
+
+    if (!customer) {
+      customer = new Customer({
+        name: customerName,
+        phone: customerPhone,
+        wholesaler: req.body.wholesaler
+      });
+    }
+
+    // 🔹 Update customer's balance & totalPurchases
+    customer.totalPurchases += total;
+
+    if (paymentType === "credit") {
+      customer.balance += total; // increase outstanding balance
+    } else {
+      // if immediate payment → balance not changed
+    }
+
+    await customer.save();
+
+
     res.status(201).json({
       message: "Order created successfully",
       order: savedOrder,
@@ -86,19 +101,19 @@ router.post("/create-order", async(req, res)=>{
 
 
 
-router.get("/all-orders", async(req, res)=>{
-    const order = await Order.find()
-    res.send(order)
+router.get("/all-orders", async (req, res) => {
+  const order = await Order.find()
+  res.send(order)
 })
 
-router.delete("/:id", async(req, res)=>{
-     await Order.findByIdAndDelete(req.params.id)
-    res.send('Order Deleted Successfully!')
+router.delete("/:id", async (req, res) => {
+  await Order.findByIdAndDelete(req.params.id)
+  res.send('Order Deleted Successfully!')
 })
 
-router.put("/:id", async(req, res)=>{
-     await Order.findByIdAndUpdate(req.params.id, req.body)
-    res.send('Order Updated Successfully!')
+router.put("/:id", async (req, res) => {
+  await Order.findByIdAndUpdate(req.params.id, req.body)
+  res.send('Order Updated Successfully!')
 })
 
 module.exports = router;
