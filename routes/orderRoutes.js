@@ -7,6 +7,7 @@ const router = express.Router();
 router.post("/create-order", async(req, res)=>{
     
     try {
+      console.log(req.body)
     const oldCustomer = await Customer.findOne({phone : req.body.customerPhone})
     if(!oldCustomer){
         const newCustomer = new Customer({
@@ -31,6 +32,7 @@ router.post("/create-order", async(req, res)=>{
       paymentMode,
       paymentType,
       dueDate,
+      wholesaler
     } = req.body;
 
     // validations
@@ -48,6 +50,7 @@ router.post("/create-order", async(req, res)=>{
       quantity: item.quantity,
       unitPrice: item.price,
       totalPrice: item.price * item.quantity,
+      unit : item.unit
     }));
 
     // Save into DB
@@ -64,6 +67,7 @@ router.post("/create-order", async(req, res)=>{
       paymentMethod: paymentMode || "cash",
       paymentStatus: paymentType === "immediate" ? "paid" : "pending",
       orderStatus: "pending",
+      wholesaler
     });
 
     const savedOrder = await newOrder.save();
