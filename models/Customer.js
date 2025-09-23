@@ -22,7 +22,7 @@ const CustomerSchema = new Schema(
     totalPurchases: { type: Number, default: 0 },
 
     // If linked to wholesaler
-    wholesalerId: { type: Schema.Types.ObjectId, ref: "Wholesaler" },
+    wholesaler: { type: Schema.Types.ObjectId, ref: "Wholesaler" },
   },
   { timestamps: true }
 );

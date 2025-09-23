@@ -35,8 +35,8 @@ const OrderSchema = new Schema(
     },
 
     wholesaler: {
-      supplierId: { type: Schema.Types.ObjectId, ref: "User" },
-      name: { type: String },
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "User" 
     },
 
     orderStatus: {

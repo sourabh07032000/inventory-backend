@@ -11,7 +11,8 @@ router.post("/create-order", async(req, res)=>{
     if(!oldCustomer){
         const newCustomer = new Customer({
             name : req.body.customerName,
-            phone : req.body.customerPhone
+            phone : req.body.customerPhone,
+            wholesaler: req.body.wholesaler
         })
         await newCustomer.save()
     }
