@@ -17,44 +17,53 @@ router.post("/create-order", async(req, res)=>{
         await newCustomer.save()
     }
     const {
-      orderNumber,
+      billNumber,
+      date,
       customerName,
       customerPhone,
-      products,
+      items,
       subtotal,
       discount,
-      tax,
-      grandTotal,
-      paymentMethod,
-      paymentStatus,
-      wholesaler,
-      orderStatus,
+      discountAmount,
+      gstRate,
+      gstAmount,
+      total,
+      paymentMode,
+      paymentType,
+      dueDate,
     } = req.body;
 
-    // Validation
-    if (!orderNumber || !customerName || !customerPhone || !products || products.length === 0) {
-      return res.status(400).json({ message: "Required fields are missing" });
+    // validations
+    if (!customerName || !customerPhone || !items || items.length === 0) {
+      return res.status(400).json({ message: "Customer and items are required" });
     }
 
-    // Calculate totals if not provided (optional safety check)
-    const calculatedSubtotal = products.reduce((acc, item) => acc + item.totalPrice, 0);
-    const finalSubtotal = subtotal || calculatedSubtotal;
-    const finalGrandTotal = grandTotal || finalSubtotal - (discount || 0) + (tax || 0);
+    // Auto-generate orderNumber if frontend didn’t pass
+    const orderNumber = billNumber || (await generateOrderNumber());
 
+    // Transform items into products format expected by Order model
+    const products = items.map((item) => ({
+      productId: item._id, // coming from cart
+      productName: item.name,
+      quantity: item.quantity,
+      unitPrice: item.price,
+      totalPrice: item.price * item.quantity,
+    }));
+
+    // Save into DB
     const newOrder = new Order({
       orderNumber,
       customerName,
       customerPhone,
-      customerAddress,
+      customerAddress: "", // optional, can extend later
       products,
-      subtotal: finalSubtotal,
+      subtotal,
       discount: discount || 0,
-      tax: tax || 0,
-      grandTotal: finalGrandTotal,
-      paymentMethod,
-      paymentStatus: paymentStatus || "pending",
-      wholesaler,
-      orderStatus: orderStatus || "pending",
+      tax: gstAmount || 0,
+      grandTotal: total,
+      paymentMethod: paymentMode || "cash",
+      paymentStatus: paymentType === "immediate" ? "paid" : "pending",
+      orderStatus: "pending",
     });
 
     const savedOrder = await newOrder.save();
@@ -63,6 +72,7 @@ router.post("/create-order", async(req, res)=>{
       message: "Order created successfully",
       order: savedOrder,
     });
+
   } catch (error) {
     console.error("Error creating order:", error);
     res.status(500).json({ message: "Server error", error });
