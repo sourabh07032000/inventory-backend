@@ -15,6 +15,7 @@ const OrderSchema = new Schema(
         quantity: { type: Number, required: true },
         unitPrice: { type: Number, required: true },
         totalPrice: { type: Number, required: true },
+        unit : {type: String}
       },
     ],
 
