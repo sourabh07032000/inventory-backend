@@ -211,7 +211,7 @@ router.get("/stats/:userId", async (req, res) => {
 router.get("/transactions/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const transactions = await Order.find({ "supplier.supplierId": userId })
+    const transactions = await Order.find({ wholesaler: userId })
       .sort({ createdAt: -1 })
       .limit(5);
     res.json(transactions);
