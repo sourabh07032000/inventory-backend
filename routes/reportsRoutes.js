@@ -9,6 +9,9 @@ const Product = require("../models/Product");
 const getStartDate = (period) => {
   const now = new Date();
   switch (period) {
+    case "1days":
+      now.setDate(now.getDate() - 1);
+      break;
     case "7days":
       now.setDate(now.getDate() - 7);
       break;
