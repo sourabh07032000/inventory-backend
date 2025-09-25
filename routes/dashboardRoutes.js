@@ -15,7 +15,7 @@ router.get("/stats/:userId", async (req, res) => {
       { $group: { _id: null, totalValue: { $sum: { $multiply: ["$quantity", "$costPrice"] } } } }
     ]);
     const totalStockValue = stockAgg.length > 0 ? stockAgg[0].totalValue : 0;
-
+    console.log(stockAgg)
     // Today's Sales
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
