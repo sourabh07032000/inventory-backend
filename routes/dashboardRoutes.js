@@ -23,7 +23,7 @@ router.get("/stats/:userId", async (req, res) => {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const todaySales = await Order.aggregate([
-      { $match: { createdAt: { $gte: startOfDay }, wholesaler: userId } },
+      { $match: { createdAt: { $gte: startOfDay }, wholesaler: new mongoose.Types.ObjectId(userId) } },
       { $group: { _id: null, total: { $sum: "$grandTotal" } } }
     ]);
     const todaysSales = todaySales.length > 0 ? todaySales[0].total : 0;
@@ -33,7 +33,7 @@ router.get("/stats/:userId", async (req, res) => {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
     const monthlyRevenue = await Order.aggregate([
-      { $match: { createdAt: { $gte: startOfMonth }, wholesaler: userId } },
+      { $match: { createdAt: { $gte: startOfMonth }, wholesaler: new mongoose.Types.ObjectId(userId) } },
       { $group: { _id: null, total: { $sum: "$grandTotal" } } }
     ]);
     const monthRevenue = monthlyRevenue.length > 0 ? monthlyRevenue[0].total : 0;
