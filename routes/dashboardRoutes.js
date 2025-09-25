@@ -23,7 +23,7 @@ router.get("/stats/:userId", async (req, res) => {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const todaySales = await Order.aggregate([
-      { $match: { createdAt: { $gte: startOfDay }, "supplier.supplierId": userId } },
+      { $match: { createdAt: { $gte: startOfDay }, wholesaler: userId } },
       { $group: { _id: null, total: { $sum: "$grandTotal" } } }
     ]);
     const todaysSales = todaySales.length > 0 ? todaySales[0].total : 0;
