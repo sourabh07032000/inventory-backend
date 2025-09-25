@@ -33,7 +33,7 @@ router.get("/stats/:userId", async (req, res) => {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
     const monthlyRevenue = await Order.aggregate([
-      { $match: { createdAt: { $gte: startOfMonth }, "supplier.supplierId": userId } },
+      { $match: { createdAt: { $gte: startOfMonth }, wholesaler: userId } },
       { $group: { _id: null, total: { $sum: "$grandTotal" } } }
     ]);
     const monthRevenue = monthlyRevenue.length > 0 ? monthlyRevenue[0].total : 0;
