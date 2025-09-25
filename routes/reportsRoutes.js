@@ -108,26 +108,51 @@ router.get("/sales-overview/:userId", async (req, res) => {
     const startDate = getStartDate(period);
 
     const salesData = await Order.aggregate([
-      { $match: { wholesaler: new mongoose.Types.ObjectId(userId), createdAt: { $gte: startDate } } },
+      {
+        $match: {
+          wholesaler: new mongoose.Types.ObjectId(userId),
+          createdAt: { $gte: startDate },
+        },
+      },
       { $unwind: "$products" },
-      { $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          dailyRevenue: { $sum: "$products.totalPrice" },
-          dailySales: { $sum: "$products.quantity" }
-      }},
-      { $sort: { _id: 1 } }
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.productId",
+          foreignField: "_id",
+          as: "productDetails",
+        },
+      },
+      { $unwind: "$productDetails" },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+          },
+          dailyRevenue: {
+            $sum: {
+              $multiply: ["$products.quantity", "$productDetails.sellingPrice"],
+            },
+          },
+          dailySales: { $sum: "$products.quantity" },
+        },
+      },
+      { $sort: { _id: 1 } },
     ]);
 
-    res.json(salesData.map(d => ({
-      date: d._id,
-      sales: d.dailySales,
-      revenue: d.dailyRevenue
-    })));
+    res.json(
+      salesData.map((d) => ({
+        date: d._id,
+        sales: d.dailySales,
+        revenue: d.dailyRevenue,
+      }))
+    );
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server Error" });
   }
 });
+
 
 // 4️⃣ Revenue vs Cost (for chart)
 router.get("/revenue-cost/:userId", async (req, res) => {
@@ -136,25 +161,35 @@ router.get("/revenue-cost/:userId", async (req, res) => {
     const period = req.query.period || "7days";
     const startDate = getStartDate(period);
 
-    const orders = await Order.find({ wholesaler: userId, createdAt: { $gte: startDate } }).populate("products.productId");
+    const orders = await Order.find({
+      wholesaler: userId,
+      createdAt: { $gte: startDate },
+    }).populate("products.productId");
+
     const chartDataMap = {};
 
-    orders.forEach(order => {
+    orders.forEach((order) => {
       const dateKey = order.createdAt.toISOString().split("T")[0];
-      if (!chartDataMap[dateKey]) chartDataMap[dateKey] = { revenue: 0, cost: 0 };
+      if (!chartDataMap[dateKey]) {
+        chartDataMap[dateKey] = { revenue: 0, cost: 0 };
+      }
 
-      order.products.forEach(p => {
-        const cost = p.productId?.costPrice || 0;
-        chartDataMap[dateKey].revenue += p.totalPrice;
-        chartDataMap[dateKey].cost += cost * p.quantity;
+      order.products.forEach((p) => {
+        const sellingPrice = p.productId?.sellingPrice || 0;
+        const costPrice = p.productId?.costPrice || 0;
+
+        chartDataMap[dateKey].revenue += sellingPrice * p.quantity;
+        chartDataMap[dateKey].cost += costPrice * p.quantity;
       });
     });
 
-    const chartData = Object.keys(chartDataMap).sort().map(date => ({
-      date,
-      revenue: chartDataMap[date].revenue,
-      cost: chartDataMap[date].cost
-    }));
+    const chartData = Object.keys(chartDataMap)
+      .sort()
+      .map((date) => ({
+        date,
+        revenue: chartDataMap[date].revenue,
+        cost: chartDataMap[date].cost,
+      }));
 
     res.json(chartData);
   } catch (err) {
@@ -162,5 +197,6 @@ router.get("/revenue-cost/:userId", async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 });
+
 
 module.exports = router;
