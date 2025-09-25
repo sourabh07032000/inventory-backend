@@ -11,6 +11,8 @@ app.use('/api/products', require('./routes/productRoutes'))
 app.use('/api/orders', require('./routes/orderRoutes'))
 app.use('/api/customers', require('./routes/customerRoutes'))
 app.use('/api/dashboard', require('./routes/dashboardRoutes'))
+app.use('/api/reports', require('./routes/reportsRoutes'))
+
 
 
 
