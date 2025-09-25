@@ -10,36 +10,68 @@ const Customer = require("../models/Customer");
 router.get("/stats/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
+    const wholesalerId = new mongoose.Types.ObjectId(userId);
 
-    // Total Stock Value (cost * stock)
+    // 🔹 Total Stock Value (cost * stock)
     const stockAgg = await Product.aggregate([
-         { $match: { wholesaler: new mongoose.Types.ObjectId(userId) } },
-         { $group: { _id: null, totalValue: { $sum: { $multiply: ["$quantity", "$costPrice"] } } } }
+      { $match: { wholesaler: wholesalerId } },
+      {
+        $group: {
+          _id: null,
+          totalValue: { $sum: { $multiply: ["$quantity", "$costPrice"] } },
+        },
+      },
     ]);
     const totalStockValue = stockAgg.length > 0 ? stockAgg[0].totalValue : 0;
-    console.log(stockAgg)
 
-    // Today's Sales
+    // 🔹 Today's Sales
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
+
     const todaySales = await Order.aggregate([
-      { $match: { createdAt: { $gte: startOfDay }, wholesaler: new mongoose.Types.ObjectId(userId) } },
-      { $group: { _id: null, total: { $sum: "$grandTotal" } } }
+      { $match: { createdAt: { $gte: startOfDay }, wholesaler: wholesalerId } },
+      { $group: { _id: null, total: { $sum: "$grandTotal" } } },
     ]);
     const todaysSales = todaySales.length > 0 ? todaySales[0].total : 0;
 
-    // Monthly Revenue
+    // 🔹 Monthly Revenue
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
-    const monthlyRevenue = await Order.aggregate([
-      { $match: { createdAt: { $gte: startOfMonth }, wholesaler: new mongoose.Types.ObjectId(userId) } },
-      { $group: { _id: null, total: { $sum: "$grandTotal" } } }
-    ]);
-    const monthRevenue = monthlyRevenue.length > 0 ? monthlyRevenue[0].total : 0;
 
-    // For now, monthly profit = revenue * 0.25 (fake calc, can be improved later)
-    const monthlyProfit = monthRevenue * 0.25;
+    const monthlyOrders = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfMonth },
+          wholesaler: wholesalerId,
+        },
+      },
+      { $unwind: "$products" }, // expand products array
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.productId",
+          foreignField: "_id",
+          as: "productData",
+        },
+      },
+      { $unwind: "$productData" },
+      {
+        $group: {
+          _id: null,
+          revenue: { $sum: "$products.totalPrice" }, // selling price * qty
+          cost: {
+            $sum: {
+              $multiply: ["$products.quantity", "$productData.costPrice"],
+            },
+          },
+        },
+      },
+    ]);
+
+    const monthRevenue = monthlyOrders.length > 0 ? monthlyOrders[0].revenue : 0;
+    const monthCost = monthlyOrders.length > 0 ? monthlyOrders[0].cost : 0;
+    const monthlyProfit = monthRevenue - monthCost;
 
     res.json([
       {
@@ -48,7 +80,7 @@ router.get("/stats/:userId", async (req, res) => {
         change: "+5%", // Placeholder
         trend: "up",
         icon: "package",
-        description: "from last month"
+        description: "from last month",
       },
       {
         title: "Today's Sales",
@@ -56,7 +88,7 @@ router.get("/stats/:userId", async (req, res) => {
         change: "+10%",
         trend: "up",
         icon: "dollar",
-        description: "from yesterday"
+        description: "from yesterday",
       },
       {
         title: "Monthly Revenue",
@@ -64,22 +96,23 @@ router.get("/stats/:userId", async (req, res) => {
         change: "+12%",
         trend: "up",
         icon: "trending",
-        description: "from last month"
+        description: "from last month",
       },
       {
         title: "Monthly Profit",
         value: monthlyProfit.toFixed(2),
         change: "-3%",
-        trend: "down",
+        trend: monthlyProfit >= 0 ? "up" : "down",
         icon: "dollar",
-        description: "from last month"
-      }
+        description: "after deducting COGS",
+      },
     ]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server Error" });
   }
 });
+
 
 // ✅ 2. Recent Transactions
 router.get("/transactions/:userId", async (req, res) => {
