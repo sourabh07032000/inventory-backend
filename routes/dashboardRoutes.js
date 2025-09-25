@@ -225,7 +225,7 @@ router.get("/transactions/:userId", async (req, res) => {
 router.get("/low-stock/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const products = await Product.find({ wholesaler: userId, stock: { $lt: 10 } }).limit(10);
+    const products = await Product.find({ wholesaler: userId, quantity: { $lt: 10 } }).limit(10);
     res.json(products);
   } catch (err) {
     console.error(err);
